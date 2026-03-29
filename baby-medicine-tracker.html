@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baby Medicine Tracker 🌙</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --card: #1a1d2e;
+    --card2: #1e2235;
+    --border: #2a2f4a;
+    --accent1: #6c8fff;
+    --accent2: #ff7eb3;
+    --accent3: #7de8b0;
+    --accent4: #ffd56b;
+    --accent5: #ff9f6b;
+    --accent6: #b57bee;
+    --text: #e8eaf6;
+    --text2: #8b92b8;
+    --done: #22c55e;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --overdue: #ff4d6d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Poppins', sans-serif;
+    min-height: 100vh;
+    padding: 0 0 60px 0;
+  }
+  /* Stars background */
+  body::before {
+    content: '';
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+      radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.35) 0%, transparent 100%),
+      radial-gradient(1px 1px at 30% 45%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 55% 20%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 75% 60%, rgba(255,255,255,0.25) 0%, transparent 100%),
+      radial-gradient(1px 1px at 88% 10%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 20% 75%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 65% 85%, rgba(255,255,255,0.25) 0%, transparent 100%),
+      radial-gradient(1px 1px at 45% 55%, rgba(255,255,255,0.15) 0%, transparent 100%),
+      radial-gradient(1px 1px at 92% 40%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 5% 90%, rgba(255,255,255,0.3) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  header {
+    background: linear-gradient(135deg, #1a1d2e 0%, #0f1117 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 20px 16px;
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+  .header-top {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .header-title {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .moon-icon { font-size: 28px; animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+  h1 {
+    font-family: 'Nunito', sans-serif;
+    font-size: 22px; font-weight: 900;
+    background: linear-gradient(90deg, #6c8fff, #ff7eb3);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .sub-title { font-size: 11px; color: var(--text2); }
+  .live-clock {
+    font-family: 'Nunito', sans-serif;
+    font-size: 20px; font-weight: 800;
+    color: var(--accent4);
+    letter-spacing: 1px;
+    text-align: right;
+  }
+  .live-date { font-size: 11px; color: var(--text2); text-align: right; }
+
+  .notif-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: linear-gradient(135deg, #6c8fff22, #ff7eb322);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 12px; cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    margin-top: 10px;
+    transition: all 0.3s;
+  }
+  .notif-btn:hover { border-color: var(--accent1); color: var(--accent1); }
+  .notif-btn.enabled { border-color: var(--accent3); color: var(--accent3); background: #7de8b011; }
+
+  .day-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px 8px;
+    position: relative; z-index: 1;
+  }
+  .day-tabs {
+    display: flex; gap: 6px; overflow-x: auto;
+    padding: 12px 20px 4px;
+    scrollbar-width: none;
+    position: relative; z-index: 1;
+  }
+  .day-tabs::-webkit-scrollbar { display: none; }
+  .day-tab {
+    flex-shrink: 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px 14px;
+    font-size: 12px; cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    color: var(--text2);
+    transition: all 0.2s;
+    text-align: center;
+    min-width: 65px;
+  }
+  .day-tab:hover { border-color: var(--accent1); color: var(--accent1); }
+  .day-tab.active {
+    background: linear-gradient(135deg, #6c8fff33, #ff7eb322);
+    border-color: var(--accent1);
+    color: var(--text);
+    font-weight: 600;
+  }
+  .day-tab .day-num { font-size: 16px; font-weight: 800; font-family: 'Nunito', sans-serif; display: block; }
+  .day-tab .day-label { font-size: 10px; }
+
+  .medicines-grid {
+    display: flex; flex-direction: column; gap: 12px;
+    padding: 12px 16px;
+    position: relative; z-index: 1;
+  }
+
+  .med-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+  }
+  .med-card:active { transform: scale(0.99); }
+  .med-card.vitd-card { opacity: 0.7; }
+  .med-card.vitd-card .card-head { background: linear-gradient(135deg, #b57bee18, #6c8fff10); }
+
+  .card-head {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px 10px;
+  }
+  .med-icon {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .card-info { flex: 1; }
+  .med-name {
+    font-family: 'Nunito', sans-serif;
+    font-size: 17px; font-weight: 800;
+  }
+  .med-schedule { font-size: 11px; color: var(--text2); margin-top: 1px; }
+
+  .next-dose-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px 12px;
+  }
+  .next-dose-label { font-size: 11px; color: var(--text2); }
+  .next-dose-time {
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px; font-weight: 800;
+    padding: 3px 12px;
+    border-radius: 20px;
+    display: inline-block;
+  }
+  .status-ok { background: #22c55e18; color: #22c55e; }
+  .status-soon { background: #f59e0b18; color: #f59e0b; }
+  .status-overdue { background: #ef444418; color: #ef4444; }
+  .status-night { background: #b57bee18; color: #b57bee; }
+  .status-done { background: #22c55e18; color: #22c55e; }
+  .status-na { background: #ffffff10; color: var(--text2); }
+
+  .doses-row {
+    border-top: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+  }
+  .dose-slot {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex: 1; min-width: 90px;
+  }
+  .dose-slot:hover { border-color: var(--accent3); }
+  .dose-slot.given {
+    background: #22c55e12;
+    border-color: #22c55e55;
+  }
+  .dose-slot.given .dose-check { color: #22c55e; }
+  .dose-check { font-size: 16px; flex-shrink: 0; }
+  .dose-info { flex: 1; }
+  .dose-time-label { font-size: 10px; color: var(--text2); }
+  .dose-time-val {
+    font-size: 12px; font-weight: 600;
+    font-family: 'Nunito', sans-serif;
+  }
+  .dose-slot.given .dose-time-val { color: #22c55e; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed;
+    inset: 0; background: #000000bb;
+    z-index: 999; align-items: flex-end; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card);
+    border-radius: 24px 24px 0 0;
+    border: 1px solid var(--border);
+    width: 100%; max-width: 480px;
+    padding: 20px 20px 40px;
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .modal-title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 18px; font-weight: 800;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .modal-row { display: flex; gap: 10px; margin-bottom: 12px; }
+  .modal-btn {
+    flex: 1; padding: 14px;
+    border-radius: 14px; border: 1px solid var(--border);
+    background: var(--card2);
+    color: var(--text);
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px; cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .modal-btn:hover { background: var(--border); }
+  .modal-btn.confirm {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border-color: transparent; color: white; font-weight: 600;
+  }
+  .modal-btn.cancel { color: var(--text2); }
+  .time-input {
+    width: 100%; padding: 14px;
+    border-radius: 14px; border: 1px solid var(--border);
+    background: var(--card2); color: var(--text);
+    font-family: 'Poppins', sans-serif; font-size: 16px;
+    text-align: center; margin-bottom: 12px;
+    outline: none;
+  }
+  .time-input:focus { border-color: var(--accent1); }
+
+  .progress-bar-wrap {
+    background: var(--card2);
+    border-radius: 4px; height: 3px;
+    margin: 0 16px 12px;
+    overflow: hidden;
+  }
+  .progress-bar { height: 100%; border-radius: 4px; transition: width 0.5s; }
+
+  .section-label {
+    font-size: 11px; text-transform: uppercase;
+    letter-spacing: 2px; color: var(--text2);
+    padding: 8px 20px 0;
+    font-weight: 600;
+  }
+
+  .completed-badge {
+    position: absolute; top: 12px; right: 12px;
+    background: #22c55e22; color: #22c55e;
+    font-size: 10px; font-weight: 700;
+    padding: 3px 8px; border-radius: 20px;
+    border: 1px solid #22c55e44;
+    font-family: 'Nunito', sans-serif;
+  }
+
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--card2); border: 1px solid var(--accent3);
+    color: var(--accent3); padding: 10px 20px;
+    border-radius: 20px; font-size: 13px; z-index: 9999;
+    opacity: 0; transition: opacity 0.3s;
+    pointer-events: none; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="header-title">
+      <span class="moon-icon">🌙</span>
+      <div>
+        <h1>Baby Meds</h1>
+        <div class="sub-title">Stay on track · 5-day course</div>
+      </div>
+    </div>
+    <div>
+      <div class="live-clock" id="liveClock">--:--</div>
+      <div class="live-date" id="liveDate">---</div>
+    </div>
+  </div>
+  <button class="notif-btn" id="notifBtn" onclick="requestNotifications()">
+    🔔 Enable Reminders
+  </button>
+</header>
+
+<div class="day-tabs" id="dayTabs"></div>
+
+<div id="medicinesContainer"></div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">Mark as Given</div>
+    <input type="time" class="time-input" id="modalTimeInput">
+    <div class="modal-row">
+      <button class="modal-btn cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-btn confirm" onclick="confirmDose()">✓ Mark Given</button>
+    </div>
+    <div class="modal-row">
+      <button class="modal-btn" style="color:var(--danger);border-color:#ef444433;" onclick="clearDose()">✕ Clear / Undo</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const START_DATE = new Date();
+START_DATE.setHours(0,0,0,0);
+
+// Medicine definitions
+const MEDICINES = [
+  {
+    id: 'adol',
+    name: 'Adol',
+    icon: '🌡️',
+    color: '#ff7eb3',
+    bgColor: '#ff7eb318',
+    schedule: 'Every 5 hours',
+    intervalHours: 5,
+    type: 'interval',
+    daysOnly: 5,
+    doses: 4, // approx per day
+    nightOnly: false,
+  },
+  {
+    id: 'ibuprofen',
+    name: 'Ibuprofen',
+    icon: '💊',
+    color: '#ff9f6b',
+    bgColor: '#ff9f6b18',
+    schedule: 'Every 8 hours',
+    intervalHours: 8,
+    type: 'interval',
+    daysOnly: 5,
+    doses: 3,
+    nightOnly: false,
+  },
+  {
+    id: 'antibiotic',
+    name: 'Antibiotic',
+    icon: '🧪',
+    color: '#6c8fff',
+    bgColor: '#6c8fff18',
+    schedule: 'Once daily at 1:30 PM',
+    intervalHours: 24,
+    type: 'fixed',
+    fixedTimes: ['13:30'],
+    daysOnly: 5,
+    doses: 1,
+    nightOnly: false,
+  },
+  {
+    id: 'nebulizer',
+    name: 'Nebulizer',
+    icon: '💨',
+    color: '#7de8b0',
+    bgColor: '#7de8b018',
+    schedule: '3 times a day',
+    intervalHours: 8,
+    type: 'interval',
+    daysOnly: 5,
+    doses: 3,
+    nightOnly: false,
+  },
+  {
+    id: 'cetirizine',
+    name: 'Cetirizine',
+    icon: '🌸',
+    color: '#ffd56b',
+    bgColor: '#ffd56b18',
+    schedule: 'Every night',
+    intervalHours: 24,
+    type: 'fixed',
+    fixedTimes: ['21:00'],
+    daysOnly: 5,
+    doses: 1,
+    nightOnly: true,
+  },
+  {
+    id: 'vitaminD',
+    name: 'Vitamin D',
+    icon: '☀️',
+    color: '#b57bee',
+    bgColor: '#b57bee18',
+    schedule: 'Every night (ongoing)',
+    intervalHours: 24,
+    type: 'fixed',
+    fixedTimes: ['21:00'],
+    daysOnly: null,
+    doses: 1,
+    nightOnly: true,
+  },
+];
+
+// Initial last-given times (today, given manually)
+const INITIAL_GIVEN = {
+  adol: { day: 0, slot: 0, time: '21:00' },       // 9 PM today
+  ibuprofen: { day: 0, slot: 0, time: '18:30' },   // 6:30 PM today
+};
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let state = JSON.parse(localStorage.getItem('babyMedState') || '{}');
+let currentDay = 0;
+let pendingModal = null;
+
+// Seed initial data if empty
+function seedInitialData() {
+  const key = `adol_0_0`;
+  if (!state[key]) {
+    state['adol_0_0'] = { given: true, time: '21:00' };
+    state['ibuprofen_0_0'] = { given: true, time: '18:30' };
+    saveState();
+  }
+}
+seedInitialData();
+
+function saveState() {
+  localStorage.setItem('babyMedState', JSON.stringify(state));
+}
+
+function getSlotKey(medId, day, slot) {
+  return `${medId}_${day}_${slot}`;
+}
+
+// ─── TIME HELPERS ─────────────────────────────────────────────────────────────
+function formatTime12(h, m) {
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hh = h % 12 || 12;
+  return `${hh}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+
+function parseHHMM(str) {
+  const [h, m] = str.split(':').map(Number);
+  return { h, m };
+}
+
+function addMinutesToHHMM(str, mins) {
+  const { h, m } = parseHHMM(str);
+  const total = h * 60 + m + mins;
+  const nh = Math.floor(total / 60) % 24;
+  const nm = total % 60;
+  return `${String(nh).padStart(2,'0')}:${String(nm).padStart(2,'0')}`;
+}
+
+function nowHHMM() {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+}
+
+function minutesUntil(hhmmTarget) {
+  const now = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const { h, m } = parseHHMM(hhmmTarget);
+  const targetMins = h * 60 + m;
+  return targetMins - nowMins;
+}
+
+function timeStatus(hhmmTarget) {
+  const diff = minutesUntil(hhmmTarget);
+  if (diff < -10) return 'overdue';
+  if (diff <= 30) return 'soon';
+  return 'ok';
+}
+
+// ─── DOSE SCHEDULE BUILDER ────────────────────────────────────────────────────
+function buildDaySchedule(med, day) {
+  // Returns array of { slotIndex, scheduledTime (hhmm), given, givenTime }
+  if (med.daysOnly && day >= med.daysOnly) return [];
+
+  const slots = [];
+
+  if (med.type === 'fixed') {
+    med.fixedTimes.forEach((t, i) => {
+      const key = getSlotKey(med.id, day, i);
+      const s = state[key];
+      slots.push({ slotIndex: i, scheduledTime: t, given: s?.given || false, givenTime: s?.time || null });
+    });
+    return slots;
+  }
+
+  // interval type — build chain from first dose
+  // Find previous given to chain next
+  const numSlots = med.doses;
+  for (let i = 0; i < numSlots; i++) {
+    const key = getSlotKey(med.id, day, i);
+    const s = state[key];
+    slots.push({ slotIndex: i, scheduledTime: null, given: s?.given || false, givenTime: s?.time || null });
+  }
+
+  // Compute scheduled times based on chain
+  let prevTime = null;
+
+  // Look for last given in prev days
+  for (let d = day - 1; d >= 0; d--) {
+    for (let i = med.doses - 1; i >= 0; i--) {
+      const k = getSlotKey(med.id, d, i);
+      if (state[k]?.given) {
+        prevTime = state[k].time;
+        break;
+      }
+    }
+    if (prevTime) break;
+  }
+
+  // If day 0, use initial seeds
+  if (day === 0 && !prevTime) {
+    if (med.id === 'adol') prevTime = '21:00';
+    if (med.id === 'ibuprofen') prevTime = '18:30';
+  }
+
+  for (let i = 0; i < slots.length; i++) {
+    if (slots[i].given && slots[i].givenTime) {
+      slots[i].scheduledTime = slots[i].givenTime;
+      prevTime = slots[i].givenTime;
+    } else {
+      if (prevTime) {
+        slots[i].scheduledTime = addMinutesToHHMM(prevTime, med.intervalHours * 60);
+        prevTime = slots[i].scheduledTime;
+      } else {
+        // No reference — default to start of day
+        slots[i].scheduledTime = addMinutesToHHMM('08:00', i * med.intervalHours * 60);
+        prevTime = slots[i].scheduledTime;
+      }
+    }
+  }
+
+  return slots;
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function renderDayTabs() {
+  const container = document.getElementById('dayTabs');
+  container.innerHTML = '';
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  for (let d = 0; d < 5; d++) {
+    const date = new Date(START_DATE);
+    date.setDate(date.getDate() + d);
+    const tab = document.createElement('div');
+    tab.className = 'day-tab' + (d === currentDay ? ' active' : '');
+    tab.innerHTML = `<span class="day-num">${date.getDate()}</span><span class="day-label">${d === 0 ? 'Today' : days[date.getDay()]}</span>`;
+    tab.onclick = () => { currentDay = d; renderDayTabs(); renderMedicines(); };
+    container.appendChild(tab);
+  }
+  // Vitamin D extra tab note
+  const vitd = document.createElement('div');
+  vitd.className = 'day-tab' + (currentDay === 99 ? ' active' : '');
+  vitd.innerHTML = `<span class="day-num">☀️</span><span class="day-label">Vit D</span>`;
+  vitd.style.opacity = '0.6';
+  vitd.style.minWidth = '55px';
+  container.appendChild(vitd);
+}
+
+function renderMedicines() {
+  const container = document.getElementById('medicinesContainer');
+  container.innerHTML = '';
+
+  // Daily label
+  const date = new Date(START_DATE);
+  date.setDate(date.getDate() + currentDay);
+  const dLabel = document.createElement('div');
+  dLabel.className = 'section-label';
+  dLabel.textContent = currentDay === 0 ? `Today — ${date.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}` :
+    `Day ${currentDay+1} — ${date.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}`;
+  container.appendChild(dLabel);
+
+  const grid = document.createElement('div');
+  grid.className = 'medicines-grid';
+
+  MEDICINES.forEach(med => {
+    if (med.daysOnly && currentDay >= med.daysOnly) return;
+
+    const slots = buildDaySchedule(med, currentDay);
+    const allGiven = slots.length > 0 && slots.every(s => s.given);
+    const card = document.createElement('div');
+    card.className = 'med-card' + (med.id === 'vitaminD' ? ' vitd-card' : '');
+
+    // Next due info
+    let nextDueHtml = '';
+    if (currentDay === 0) {
+      const notGiven = slots.find(s => !s.given);
+      if (notGiven && notGiven.scheduledTime) {
+        const st = timeStatus(notGiven.scheduledTime);
+        const { h, m } = parseHHMM(notGiven.scheduledTime);
+        const t12 = formatTime12(h, m);
+        const diff = minutesUntil(notGiven.scheduledTime);
+        let label, cls;
+        if (allGiven) { label = 'All done ✓'; cls = 'status-done'; }
+        else if (diff < -10) { label = `Overdue! ${t12}`; cls = 'status-overdue'; }
+        else if (diff <= 0) { label = `Due now!`; cls = 'status-soon'; }
+        else if (diff <= 30) { label = `Due in ${diff}m`; cls = 'status-soon'; }
+        else {
+          const hh = Math.floor(diff/60), mm = diff%60;
+          label = hh > 0 ? `In ${hh}h ${mm}m` : `In ${mm}m`;
+          cls = 'status-ok';
+        }
+        nextDueHtml = `<div class="next-dose-row"><span class="next-dose-label">Next dose</span><span class="next-dose-time ${cls}">${label}</span></div>`;
+      } else if (allGiven) {
+        nextDueHtml = `<div class="next-dose-row"><span class="next-dose-label">Today</span><span class="next-dose-time status-done">All done ✓</span></div>`;
+      }
+    }
+
+    // Progress
+    const given = slots.filter(s => s.given).length;
+    const pct = slots.length ? (given / slots.length * 100) : 0;
+
+    // Dose slots HTML
+    const doseSlotsHtml = slots.map((slot, i) => {
+      const { h, m } = slot.scheduledTime ? parseHHMM(slot.scheduledTime) : { h: 0, m: 0 };
+      const t12 = slot.scheduledTime ? formatTime12(h, m) : '--:--';
+      return `
+        <div class="dose-slot ${slot.given ? 'given' : ''}" onclick="openModal('${med.id}', ${currentDay}, ${slot.slotIndex}, '${slot.scheduledTime || ''}')">
+          <span class="dose-check">${slot.given ? '✅' : '⬜'}</span>
+          <div class="dose-info">
+            <div class="dose-time-label">Dose ${i+1}</div>
+            <div class="dose-time-val">${slot.given && slot.givenTime ? formatTime12(...parseHHMMArr(slot.givenTime)) : t12}</div>
+          </div>
+        </div>`;
+    }).join('');
+
+    card.innerHTML = `
+      ${allGiven ? '<div class="completed-badge">✓ Done</div>' : ''}
+      <div class="card-head">
+        <div class="med-icon" style="background:${med.bgColor};">${med.icon}</div>
+        <div class="card-info">
+          <div class="med-name" style="color:${med.color}">${med.name}</div>
+          <div class="med-schedule">${med.schedule}${med.daysOnly ? ` · ${med.daysOnly}-day course` : ' · Ongoing'}</div>
+        </div>
+      </div>
+      ${nextDueHtml}
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" style="width:${pct}%;background:${med.color}"></div>
+      </div>
+      <div class="doses-row">${doseSlotsHtml}</div>
+    `;
+    grid.appendChild(card);
+  });
+
+  container.appendChild(grid);
+}
+
+function parseHHMMArr(str) {
+  const { h, m } = parseHHMM(str);
+  return [h, m];
+}
+
+// ─── MODAL ────────────────────────────────────────────────────────────────────
+function openModal(medId, day, slot, scheduledTime) {
+  pendingModal = { medId, day, slot, scheduledTime };
+  const med = MEDICINES.find(m => m.id === medId);
+  document.getElementById('modalTitle').textContent = `${med.icon} ${med.name} — Dose ${slot+1}`;
+  // Pre-fill with scheduled time or now
+  const existing = state[getSlotKey(medId, day, slot)];
+  document.getElementById('modalTimeInput').value = existing?.time || scheduledTime || nowHHMM();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  pendingModal = null;
+}
+
+function confirmDose() {
+  if (!pendingModal) return;
+  const { medId, day, slot } = pendingModal;
+  const time = document.getElementById('modalTimeInput').value;
+  const key = getSlotKey(medId, day, slot);
+  state[key] = { given: true, time };
+  saveState();
+  closeModal();
+  renderMedicines();
+  showToast('✅ Dose recorded!');
+  scheduleNextReminders();
+}
+
+function clearDose() {
+  if (!pendingModal) return;
+  const { medId, day, slot } = pendingModal;
+  const key = getSlotKey(medId, day, slot);
+  delete state[key];
+  saveState();
+  closeModal();
+  renderMedicines();
+  showToast('↩️ Dose cleared');
+}
+
+// ─── CLOCK ────────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('liveClock').textContent = `${h}:${m}:${s}`;
+  document.getElementById('liveDate').textContent = now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// Re-render every minute to refresh status
+setInterval(() => { renderMedicines(); }, 60000);
+
+// ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
+let notifEnabled = false;
+let notifTimers = [];
+
+function requestNotifications() {
+  if (!('Notification' in window)) {
+    showToast('❌ Notifications not supported');
+    return;
+  }
+  Notification.requestPermission().then(perm => {
+    if (perm === 'granted') {
+      notifEnabled = true;
+      document.getElementById('notifBtn').textContent = '🔔 Reminders On';
+      document.getElementById('notifBtn').classList.add('enabled');
+      scheduleNextReminders();
+      showToast('🔔 Reminders enabled!');
+    } else {
+      showToast('❌ Permission denied');
+    }
+  });
+}
+
+function scheduleNextReminders() {
+  if (!notifEnabled) return;
+  notifTimers.forEach(t => clearTimeout(t));
+  notifTimers = [];
+
+  MEDICINES.forEach(med => {
+    if (med.daysOnly && currentDay >= med.daysOnly) return;
+    const slots = buildDaySchedule(med, 0); // today only
+    slots.forEach(slot => {
+      if (slot.given) return;
+      const diff = minutesUntil(slot.scheduledTime) * 60 * 1000;
+      if (diff > 0 && diff < 24 * 60 * 60 * 1000) {
+        const t = setTimeout(() => {
+          new Notification(`💊 ${med.name} is due!`, {
+            body: `Time to give ${med.name}. Scheduled: ${slot.scheduledTime}`,
+            icon: '🌙',
+          });
+        }, diff);
+        notifTimers.push(t);
+        // 15 min warning
+        if (diff > 15 * 60 * 1000) {
+          const t2 = setTimeout(() => {
+            new Notification(`⏰ ${med.name} in 15 minutes`, {
+              body: `${med.name} due soon at ${slot.scheduledTime}`,
+              icon: '🌙',
+            });
+          }, diff - 15 * 60 * 1000);
+          notifTimers.push(t2);
+        }
+      }
+    });
+  });
+}
+
+// Check on load if permission already granted
+if (Notification.permission === 'granted') {
+  notifEnabled = true;
+  document.getElementById('notifBtn').textContent = '🔔 Reminders On';
+  document.getElementById('notifBtn').classList.add('enabled');
+  scheduleNextReminders();
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+renderDayTabs();
+renderMedicines();
+
+// Close modal on overlay click
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+</body>
+</html>
